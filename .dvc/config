@@ -1,0 +1,4 @@
+[core]
+    remote = gcsremote
+['remote "gcsremote"']
+    url = gs://mlops-course-phonic-axle-473506-u8-unique/dvcstore
