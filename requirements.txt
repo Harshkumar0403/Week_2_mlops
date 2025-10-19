@@ -1,0 +1,19 @@
+#Core ML & Data Science
+pandas
+scikit-learn
+joblib
+numpy
+
+# Testing
+pytest
+pytest-cov
+
+# DVC + Google Cloud Storage support
+dvc
+dvc-gs
+
+# Cloud ML Reporting (CML)
+
+# Utility
+pyyaml
+
