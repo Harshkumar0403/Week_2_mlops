@@ -2,43 +2,66 @@ name: CI - Main Branch
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   main-tests:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-      - name: Authenticate GCP (for DVC)
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-        run: |
-          echo "$GCP_SA_KEY" > gcp-key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=gcp-key.json
+    - name: Authenticate to Google Cloud
+      env:
+        GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      run: |
+        echo "$GCP_SA_KEY" > github-dvc-key.json
+        export GOOGLE_APPLICATION_CREDENTIALS=github-dvc-key.json
+        gcloud auth activate-service-account --key-file=github-dvc-key.json
+        gcloud config set project phonic-axle-473506-u8
+        gcloud auth list
+        gsutil ls gs://mlops-course-phonic-axle-473506-u8-unique
 
-      - name: Pull data and model from DVC
-        run: |
-          dvc pull
+    - name: Pull data and model from DVC
+      run: |
+        export GOOGLE_APPLICATION_CREDENTIALS=github-dvc-key.json
+        dvc pull
 
-      - name: Run unit tests
-        run: |
-          pytest -v
-          python3 test.py
+    - name: Run tests and generate metrics
+      run: |
+        pytest -v --disable-warnings -q test_pipeline.py
+        echo "✅ Model evaluation completed successfully on main branch." >> metrics.txt
+        cat metrics.txt
 
-      - name: Print Metrics
-        run: |
-          cat metrics.txt
+    - name: Generate Markdown report
+      run: |
+        echo "## ✅ Main Branch CI Test Report" > report.md
+        echo "" >> report.md
+        cat metrics.txt >> report.md
 
+    - name: Upload report as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: main-ci-report
+        path: report.md
+
+    - name: Post report as PR comment (optional)
+      if: github.event_name == 'pull_request'
+      uses: iterative/setup-cml@v2
+      env:
+        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        run: cml comment create report.md
