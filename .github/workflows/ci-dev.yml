@@ -54,9 +54,8 @@ jobs:
 
     - name: Post report as PR comment
       if: github.event_name == 'pull_request'
-      uses: iterative/cml@v0.3.0
+      uses: iterative/setup-cml@v2
       env:
         REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        file: report.md
- 
+        run: cml comment create report.md
