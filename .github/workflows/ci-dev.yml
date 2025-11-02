@@ -25,11 +25,26 @@ jobs:
           pip install -r requirements.txt
 
       - name: Authenticate GCP (for DVC)
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "$GCP_SA_KEY" > gcp-key.json
           export GOOGLE_APPLICATION_CREDENTIALS=gcp-key.json
+          gcloud auth activate-service-account --key-file=gcp-key.json
+          gcloud config set project phonic-axle-473506-u8
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+  
+      - name: Check Auth Status
+        run: |
+          gcloud auth list
+          echo "Current project:"
+          gcloud config list project
+          echo "Checking bucket access:"
+          gsutil ls gs://mlops-course-phonic-axle-473506-u8-unique
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+
+
 
       - name: Pull data and model from DVC
         run: |
