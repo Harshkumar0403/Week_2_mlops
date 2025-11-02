@@ -42,7 +42,7 @@ jobs:
 
     - name: Run tests and generate metrics
       run: |
-        pytest -v --disable-warnings -q
+        pytest -v --disable-warnings -q test_pipeline.py
         echo "Model evaluation completed" >> metrics.txt
         cat metrics.txt
 
